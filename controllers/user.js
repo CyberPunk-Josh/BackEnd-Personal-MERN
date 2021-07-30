@@ -188,9 +188,17 @@ exports.getAvatar = async(req, res) => {
 // update user
 exports.updateUser = async(req, res) => {
     // data to update
-    const userData = req.body;
+    let userData = req.body;
+    userData.email = req.body.email.toLowerCase();
     // id to find user
     const params = req.params;
+
+    // encrypting password when user edit an item
+    if(userData.password){
+        // hasing password
+        const salt = await bcryptjs.genSalt(10);
+        userData.password = await bcryptjs.hash(userData.password, salt);
+    }
 
     try {
         let userToUpdate = await User.findByIdAndUpdate({ _id: params.id}, userData);
@@ -200,6 +208,50 @@ exports.updateUser = async(req, res) => {
             return;
         } else {
             res.status(200).send({ message: 'User updated' });
+        }
+    } catch(error){
+        console.log(error);
+        res.status(500).send({message: 'Server Error'});
+    }
+}
+
+// activate users
+exports.activateUser = async (req, res) => {
+    const params = req.params;
+    const { active } = req.body;
+
+    try{
+        let userToActivate = await User.findOneAndUpdate( { _id: params.id} , { active });
+        
+        if(!userToActivate){
+            res.status(404).send({message: 'User not found'});
+            return;
+        }
+
+        if( active === true ){
+            res.status(200).send({message: 'User activated'});
+        } else {
+            res.status(200).send({message: 'User desactivated'});
+        }
+
+    } catch(error){
+        console.log(error);
+        res.status(500).send({message: 'Server Error'});
+    }
+}
+
+// delete user
+exports.deleteUser = async (req, res) => {
+    const params = req.params;
+
+    try{
+        let userDeleted = await User.findByIdAndRemove( { _id: params.id});
+
+        if(!userDeleted){
+            res.status(404).send({message: 'User not found'});
+            return;
+        } else {
+            res.status(200).send({message: 'User deleted'});
         }
     } catch(error){
         console.log(error);
