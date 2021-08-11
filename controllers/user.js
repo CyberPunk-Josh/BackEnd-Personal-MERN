@@ -14,7 +14,7 @@ exports.signUp = async(req, res) => {
         
         if(usuario){
             res.status(400).send({message: 'User already exists'})
-            return
+            return;
         }
 
         if(!password || !repeatPassword){
@@ -256,5 +256,55 @@ exports.deleteUser = async (req, res) => {
     } catch(error){
         console.log(error);
         res.status(500).send({message: 'Server Error'});
+    }
+}
+
+// create user has admin
+exports.signUpAdmin = async (req, res) => {
+
+    const {name, lastName, email, role, password} = req.body;
+
+    try{
+        // checking if user already exists
+        let usuario = await User.findOne({ email });
+
+        if(usuario){
+            res.status(400).send({message: 'User already exists'})
+            return;
+        }
+
+        if(!name || !lastName || !email || !role || !password){
+
+            res.status(400).send({message: 'All fields are required'});
+            return;
+        } else {
+
+            usuario = new User(req.body)
+            usuario.name = name;
+            usuario.lastName = lastName;
+            usuario.email = email.toLowerCase();
+            usuario.role = role;
+            usuario.active = true;
+
+            // hasing password
+            const salt = await bcryptjs.genSalt(10);
+            usuario.password = await bcryptjs.hash(password, salt);
+
+            // saving the user into db:
+            await usuario.save((err, userStored) => {
+                if(err){
+                    res.status(500).send({message: 'Server Error'});
+                } else {
+                    // res.status(200).send({usuario: userStored})
+                    res.status(200).send({message: 'User created successfully'});
+                }
+            })
+        }
+
+    } catch(error){
+
+        console.log(error);
+        res.status(400).send({message: 'Something went wrong'});
+
     }
 }
