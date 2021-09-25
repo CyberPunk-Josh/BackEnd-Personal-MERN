@@ -86,3 +86,23 @@ exports.activateMenu = async (req, res) => {
         res.status(500).send({message: 'Server Error'});
     }
 }
+
+// delete menu
+exports.deleteMenu = async (req, res) => {
+    const params = req.params;
+
+    try{
+        let menuDeleted = await Menu.findByIdAndRemove({ _id: params.id});
+
+        if(!menuDeleted) {
+            res.status(404).send({message: 'Menu not found'});
+            return;
+        } else {
+            res.status(200).send({message: 'Menu deleted successfully'});
+        }
+
+    }catch(error){
+        console.log(error);
+        res.status(500).send({message: 'Server Error'});
+    }
+}
